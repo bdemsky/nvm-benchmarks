@@ -535,8 +535,8 @@ clht_put_seq(clht_hashtable_t* hashtable, clht_addr_t key, clht_val_t val, uint6
             DPP(put_num_failed_expand);
             int null;
             bucket->next = clht_bucket_create_stats(hashtable, &null);
-            bucket->next->val[0] = val;
-            bucket->next->key[0] = key;
+            ((bucket_t*)bucket->next)->val[0] = val;
+            ((bucket_t*) bucket->next)->key[0] = key;
             return true;
         }
 

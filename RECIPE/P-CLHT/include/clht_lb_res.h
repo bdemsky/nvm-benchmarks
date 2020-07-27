@@ -160,7 +160,7 @@ typedef struct ALIGNED(CACHE_LINE_SIZE) bucket_s
   volatile uint32_t hops;
   clht_addr_t key[ENTRIES_PER_BUCKET];
   clht_val_t val[ENTRIES_PER_BUCKET];
-  volatile struct bucket_s* next;
+  volatile void* next;
 } bucket_t;
 
 //#if __GNUC__ > 4 && __GNUC_MINOR__ > 4
