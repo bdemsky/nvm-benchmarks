@@ -1,7 +1,13 @@
-CXX := g++
-CFLAGS := -std=c++17 -I./ -lrt -lpthread -O3
+#CXX := g++
+CXX := /scratch/nvm/benchmarks/g++
+CFLAGS := -std=c++17 -I. -lpthread -O3
+LIBS=-lpthread
+OUTPUT=example
 
-all: ALL_CCEH Cuckoo LinearProbing Extendible Level Path
+all: ALL_CCEH main Cuckoo LinearProbing Extendible Level Path
+
+main: example.cpp src/CCEH_LSB.o
+	$(CXX) $(CFLAGS) -o $(OUTPUT) example.cpp src/CCEH_LSB.o $(LIBS)
 
 ALL_CCEH: CCEH_MSB CCEH_LSB
 
@@ -30,3 +36,4 @@ Path: src/path_hashing.cpp src/path_hashing.hpp
 
 clean:
 	rm -rf src/*.o
+	rm $(OUTPUT)
