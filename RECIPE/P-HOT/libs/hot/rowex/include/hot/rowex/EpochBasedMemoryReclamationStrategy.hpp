@@ -7,7 +7,6 @@
 #include <thread>
 
 #include "hot/rowex/ThreadSpecificEpochBasedReclamationInformation.hpp"
-#define NUMBER_OF_THREAD 10
 
 namespace hot { namespace rowex {
 
@@ -16,16 +15,18 @@ class EpochBasedMemoryReclamationStrategy {
 	static uint32_t PREVIOUS_EPOCH[3];
 
 	std::atomic<uint32_t> mCurrentEpoch;
-	ThreadSpecificEpochBasedReclamationInformation mThreadSpecificInformations [NUMBER_OF_THREAD];
+	ThreadSpecificEpochBasedReclamationInformation* mThreadSpecificInformations;
+	uint number_of_thread;
 
 private:
-	EpochBasedMemoryReclamationStrategy() : mCurrentEpoch(0) {
+	EpochBasedMemoryReclamationStrategy(uint thread_num) : mCurrentEpoch(0), number_of_thread(thread_num) {
+		mThreadSpecificInformations = new ThreadSpecificEpochBasedReclamationInformation [number_of_thread];
 	}
 
 public:
 
-	static EpochBasedMemoryReclamationStrategy* getInstance() {
-		static EpochBasedMemoryReclamationStrategy instance;
+	static EpochBasedMemoryReclamationStrategy* getInstance(uint thread_num) {
+		static EpochBasedMemoryReclamationStrategy instance(thread_num);
 		return &instance;
 	}
 
@@ -40,7 +41,7 @@ public:
 
 	bool canAdvance(uint32_t currentEpoch, uint64_t id) {
 		uint32_t previousEpoch = PREVIOUS_EPOCH[currentEpoch];
-		for (int i=0; i < NUMBER_OF_THREAD; i++){
+		for (uint i=0; i < number_of_thread; i++){
 			if(mThreadSpecificInformations[i].getLocalEpoch() == previousEpoch){
 				return false;
 			}

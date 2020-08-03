@@ -4,6 +4,7 @@
 #include <cassert>
 #include <bitset>
 #include <immintrin.h>
+#include <mmintrin.h>
 #include <iostream>
 
 namespace hot { namespace commons {

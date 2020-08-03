@@ -40,7 +40,7 @@ template<typename ValueType, template <typename> typename KeyExtractor>
 	typename idx::contenthelpers::KeyComparator<typename  HOTRowex<ValueType, KeyExtractor>::KeyType>::type
 	HOTRowex<ValueType, KeyExtractor>::compareKeys;
 
-template<typename ValueType, template <typename> typename KeyExtractor> HOTRowex<ValueType, KeyExtractor>::HOTRowex() : mRoot {}, mMemoryReclamation(EpochBasedMemoryReclamationStrategy::getInstance()) {
+template<typename ValueType, template <typename> typename KeyExtractor> HOTRowex<ValueType, KeyExtractor>::HOTRowex(uint thread_num) : mRoot {}, mMemoryReclamation(EpochBasedMemoryReclamationStrategy::getInstance(thread_num)) {
 }
 
 template<typename ValueType, template <typename> typename KeyExtractor> HOTRowex<ValueType, KeyExtractor>::HOTRowex(HOTRowex && other) : mRoot(other.mRoot), mMemoryReclamation(other.mMemoryReclamation) {

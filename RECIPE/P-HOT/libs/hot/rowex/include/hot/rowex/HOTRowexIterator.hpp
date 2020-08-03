@@ -37,32 +37,33 @@ template<typename ValueType, template <typename> typename KeyExtractor> class HO
 	HOTRowexChildPointer const * mRootPointerLocation;
 	EpochBasedMemoryReclamationStrategy* mMemoryReclamationStrategy;
 	HotRowexIteratorBufferState<KeyType> mCurrentBufferState;
+	uint64_t threadID;
 
 public:
-	static inline HOTRowexSynchronizedIterator begin(HOTRowexChildPointer const * rootPointerLocation, EpochBasedMemoryReclamationStrategy * const & memoryReclamationStrategy) {
-		MemoryGuard guard(memoryReclamationStrategy);
+	static inline HOTRowexSynchronizedIterator begin(HOTRowexChildPointer const * rootPointerLocation, EpochBasedMemoryReclamationStrategy * const & memoryReclamationStrategy, uint64_t threadID) {
+		MemoryGuard guard(memoryReclamationStrategy, threadID);
 		HOTRowexChildPointer rootPointer = *rootPointerLocation;
-		return rootPointer.isUsed() ? HOTRowexSynchronizedIterator(rootPointerLocation, rootPointer, memoryReclamationStrategy, guard) : END_ITERATOR;
+		return rootPointer.isUsed() ? HOTRowexSynchronizedIterator(rootPointerLocation, rootPointer, memoryReclamationStrategy, guard, threadID) : END_ITERATOR;
 	}
 
-	static inline HOTRowexSynchronizedIterator find(HOTRowexChildPointer const * rootPointerLocation, KeyType const & searchKey, EpochBasedMemoryReclamationStrategy * const & memoryReclamationStrategy) {
-		MemoryGuard guard(memoryReclamationStrategy);
+	static inline HOTRowexSynchronizedIterator find(HOTRowexChildPointer const * rootPointerLocation, KeyType const & searchKey, EpochBasedMemoryReclamationStrategy * const & memoryReclamationStrategy, uint64_t threadID) {
+		MemoryGuard guard(memoryReclamationStrategy, threadID);
 		HOTRowexChildPointer rootPointer = *rootPointerLocation;
-		return rootPointer.isUsed() ? HOTRowexSynchronizedIterator(rootPointerLocation, rootPointer, searchKey, memoryReclamationStrategy, guard) : END_ITERATOR;
+		return rootPointer.isUsed() ? HOTRowexSynchronizedIterator(rootPointerLocation, rootPointer, searchKey, memoryReclamationStrategy, guard, threadID) : END_ITERATOR;
 	}
 
 	static inline HOTRowexSynchronizedIterator const & end() {
 		return END_ITERATOR;
 	}
 
-	static inline HOTRowexSynchronizedIterator getBounded(HOTRowexChildPointer const * rootPointer, KeyType const & searchKey, bool isLowerBound, EpochBasedMemoryReclamationStrategy * const & memoryReclamationStrategy) {
-		MemoryGuard guard(memoryReclamationStrategy);
+	static inline HOTRowexSynchronizedIterator getBounded(HOTRowexChildPointer const * rootPointer, KeyType const & searchKey, bool isLowerBound, EpochBasedMemoryReclamationStrategy * const & memoryReclamationStrategy, uint64_t threadID) {
+		MemoryGuard guard(memoryReclamationStrategy, threadID);
 		HOTRowexChildPointer const & currentRoot = *rootPointer;
 
 		return (currentRoot.isLeaf()
 				&& idx::contenthelpers::contentEquals(searchKey, extractKey(idx::contenthelpers::tidToValue<ValueType>(currentRoot.getTid())))
 			   ) || currentRoot.isAValidNode()
-			   ? HOTRowexSynchronizedIterator(rootPointer, currentRoot, searchKey, isLowerBound, memoryReclamationStrategy, guard)
+			   ? HOTRowexSynchronizedIterator(rootPointer, currentRoot, searchKey, isLowerBound, memoryReclamationStrategy, guard, threadID)
 			   : END_ITERATOR;
 	}
 
@@ -84,14 +85,14 @@ private:
 		return currentStackEntry - rootStackEntry;
 	}
 
-	inline HOTRowexSynchronizedIterator(HOTRowexChildPointer const * const & rootPointerLocation, HOTRowexChildPointer const & rootPointer, EpochBasedMemoryReclamationStrategy* memoryReclamationStrategy, MemoryGuard const & currentMemoryGuard) //DESCEND or STORE
+	inline HOTRowexSynchronizedIterator(HOTRowexChildPointer const * const & rootPointerLocation, HOTRowexChildPointer const & rootPointer, EpochBasedMemoryReclamationStrategy* memoryReclamationStrategy, MemoryGuard const & currentMemoryGuard, uint64_t _threadID) //DESCEND or STORE
 		: mRootPointerLocation(rootPointerLocation), mMemoryReclamationStrategy(memoryReclamationStrategy), mCurrentBufferState(
 			fillBuffer(
 				HotRowexIteratorBufferState<KeyType>(getBufferRoot()),
 				HOTRowexSynchronizedIteratorStackState({ getStackRoot(), static_cast<int32_t>(ITERATOR_FILL_BUFFER_STATE_DESCEND + rootPointer.isLeafInt()), getStackRoot()->init(rootPointerLocation, rootPointer, rootPointerLocation + 1) }),
 				currentMemoryGuard
 			)
-		)
+		), threadID(_threadID)
 	{
 	}
 
@@ -124,7 +125,7 @@ public:
 		if(mCurrentBufferState.canAdvance()) {
 			mCurrentBufferState.advance();
 		} else {
-			MemoryGuard guard { mMemoryReclamationStrategy };
+			MemoryGuard guard( mMemoryReclamationStrategy , threadID);
 			const HOTRowexChildPointer currentRoot = *mRootPointerLocation;
 			//is Full implies that the end of the data structure was reached
 			if(currentRoot.isUsed() & !mCurrentBufferState.endOfDataReached()) {

@@ -310,7 +310,7 @@ template<unsigned int numberExtractionMasks> inline std::array<uint8_t, 256> Mul
 };
 
 
-template<> template<typename Operation> inline auto MultiMaskPartialKeyMapping<1u>::executeWithCorrectMaskAndDiscriminativeBitsRepresentation(Operation const & operation) const {
+template<> template<typename Operation> auto MultiMaskPartialKeyMapping<1u>::executeWithCorrectMaskAndDiscriminativeBitsRepresentation(Operation const & operation) const {
 	assert(getMaximumMaskByteIndex(calculateNumberBitsUsed()) <= 3);
 	switch(getMaximumMaskByteIndex(calculateNumberBitsUsed())) {
 		case 0:
@@ -322,13 +322,13 @@ template<> template<typename Operation> inline auto MultiMaskPartialKeyMapping<1
 	}
 }
 
-template<> template<typename Operation> inline auto MultiMaskPartialKeyMapping<2u>::executeWithCorrectMaskAndDiscriminativeBitsRepresentation(Operation const & operation) const {
+template<> template<typename Operation> auto MultiMaskPartialKeyMapping<2u>::executeWithCorrectMaskAndDiscriminativeBitsRepresentation(Operation const & operation) const {
 	return (mNumberKeyBits <= 16)
 		   ? operation(*this, static_cast<uint16_t>(UINT16_MAX))
 		   : MultiMaskPartialKeyMapping<4u>(*this).executeWithCorrectMaskAndDiscriminativeBitsRepresentation(operation);
 }
 
-template<> template<typename Operation> inline auto MultiMaskPartialKeyMapping<4u>::executeWithCorrectMaskAndDiscriminativeBitsRepresentation(Operation const & operation) const {
+template<> template<typename Operation> auto MultiMaskPartialKeyMapping<4u>::executeWithCorrectMaskAndDiscriminativeBitsRepresentation(Operation const & operation) const {
 	return operation(*this, static_cast<uint32_t>(UINT32_MAX));
 }
 
@@ -384,7 +384,7 @@ template<> inline void MultiMaskPartialKeyMapping<4u>::initializeDataAndPosition
 	_mm256_storeu_si256(reinterpret_cast<__m256i*>(mExtractionData.data()), zero);
 }
 
-template<unsigned int numberExtractionMasks> inline typename MultiMaskPartialKeyMapping<numberExtractionMasks>::ExtractionDataArray MultiMaskPartialKeyMapping<numberExtractionMasks>::mapInput(uint8_t const __restrict__ * keyBytes) const {
+template<unsigned int numberExtractionMasks> inline typename MultiMaskPartialKeyMapping<numberExtractionMasks>::ExtractionDataArray MultiMaskPartialKeyMapping<numberExtractionMasks>::mapInput(uint8_t const * __restrict__ keyBytes) const {
 	ExtractionDataArray mappedInput = zeroInitializedArray();
 	uint8_t* __restrict__ mappedInputBytes = reinterpret_cast<uint8_t*>(mappedInput.data());
 	uint8_t const * __restrict__ positions = reinterpret_cast<uint8_t const* >(mExtractionPositions.data());

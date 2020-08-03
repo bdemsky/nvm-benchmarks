@@ -44,7 +44,7 @@ template<typename ValueType, template <typename> typename KeyExtractor> struct H
 	/**
 	 * Creates an empty concurrent order preserving index structure based on the HOT algorithm
 	 */
-	HOTRowex();
+	HOTRowex(uint thread_num);
 	HOTRowex(HOTRowex const & other) = delete;
 	HOTRowex(HOTRowex && other);
 

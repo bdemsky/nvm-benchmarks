@@ -131,10 +131,10 @@ struct HOTRowexInsertStack {
 		return (isBoundaryNode)
 			   //in this case the single entry is a boundary entry -> insert the value into the child partition
 			   //As the insert results in a new partition root, no prefix bits are set and all entries in the partition are affected
-			   ? HOTRowexFirstInsertLevel<EntryType> { nextInsertStackEntry ,
+			   ? HOTRowexFirstInsertLevel<EntryType> ( nextInsertStackEntry ,
 				  {0, 0, static_cast<uint32_t>(nextInsertStackEntry->getChildPointer().getNode()->getNumberEntries()), mismatchingBit},
-				   false}
-			   : HOTRowexFirstInsertLevel<EntryType> { possibleInsertStackEntry, insertInformation, isSingleEntry & isLeafEntry & (possibleInsertStackEntry->getChildPointer().getHeight() > 1) };
+				   false)
+			   : HOTRowexFirstInsertLevel<EntryType> ( possibleInsertStackEntry, insertInformation, isSingleEntry & isLeafEntry & (possibleInsertStackEntry->getChildPointer().getHeight() > 1) );
 	}
 
 	idx::contenthelpers::OptionalValue<hot::commons::DiscriminativeBit> getMismatchingBit(uint8_t const *newKeyBytes) const {

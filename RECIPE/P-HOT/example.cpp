@@ -8,6 +8,11 @@ using namespace std;
 #include <idx/contenthelpers/IdentityKeyExtractor.hpp>
 #include <idx/contenthelpers/OptionalValue.hpp>
 
+extern "C" {
+    void * getRegionFromID(uint ID);
+    void setRegionFromID(uint ID, void *ptr);
+}
+
 typedef struct IntKeyVal {
     uint64_t key;
     uintptr_t value;
@@ -28,6 +33,7 @@ typedef struct thread_data {
     hot::rowex::HOTRowex<IntKeyVal *, IntKeyExtractor> *hot;
 } thread_data_t;
 
+hot::rowex::HOTRowex<IntKeyVal *, IntKeyExtractor> *mTrie;
 
 void run(char **argv) {
     std::cout << "Simple Example of P-HOT" << std::endl;
@@ -40,10 +46,13 @@ void run(char **argv) {
         keys[i] = i + 1;
     }
 
-    int num_thread = atoi(argv[2]);
-    
-    printf("operation,n,ops/s\n");
-    hot::rowex::HOTRowex<IntKeyVal *, IntKeyExtractor> mTrie;
+    uint num_thread = atoi(argv[2]);
+    if(getRegionFromID(0) == NULL){
+        mTrie = new hot::rowex::HOTRowex<IntKeyVal *, IntKeyExtractor> (num_thread);
+        setRegionFromID(0, mTrie);
+    } else {
+        mTrie = (hot::rowex::HOTRowex<IntKeyVal *, IntKeyExtractor> *)getRegionFromID(0);
+    }
     thread_data_t *tds = (thread_data_t *) malloc(num_thread * sizeof(thread_data_t));
 
     std::atomic<int> next_thread_id;
@@ -55,7 +64,7 @@ void run(char **argv) {
         auto func = [&]() {
             int thread_id = next_thread_id.fetch_add(1);
             tds[thread_id].id = thread_id;
-            tds[thread_id].hot = &mTrie;
+            tds[thread_id].hot = mTrie;
 
             uint64_t start_key = n / num_thread * (uint64_t)thread_id;
             uint64_t end_key = start_key + n / num_thread;
@@ -64,7 +73,7 @@ void run(char **argv) {
                 posix_memalign((void **)&key, 64, sizeof(IntKeyVal));
                 key->key = keys[i];
                 key->value = keys[i];
-                if (!(mTrie.insert(key, thread_id))) {
+                if (!(tds[thread_id].hot->insert(key, thread_id))) {
                     fprintf(stderr, "[HOT] insert faile\n");
                     exit(1);
                 }
@@ -72,10 +81,10 @@ void run(char **argv) {
         };
         std::vector<std::thread> thread_group;
 
-        for (int i = 0; i < num_thread; i++)
+        for (uint i = 0; i < num_thread; i++)
             thread_group.push_back(std::thread{func});
 
-        for (int i = 0; i < num_thread; i++)
+        for (uint i = 0; i < num_thread; i++)
             thread_group[i].join();
 
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
@@ -91,12 +100,12 @@ void run(char **argv) {
         auto func = [&]() {
             int thread_id = next_thread_id.fetch_add(1);
             tds[thread_id].id = thread_id;
-            tds[thread_id].hot = &mTrie;
+            tds[thread_id].hot = mTrie;
 
             uint64_t start_key = n / num_thread * (uint64_t)thread_id;
             uint64_t end_key = start_key + n / num_thread;
             for (uint64_t i = start_key; i < end_key; i++) {
-                idx::contenthelpers::OptionalValue<IntKeyVal *> result = mTrie.lookup(keys[i], thread_id);
+                idx::contenthelpers::OptionalValue<IntKeyVal *> result = tds[thread_id].hot->lookup(keys[i], thread_id);
                 if (!result.mIsValid || result.mValue->value != keys[i]) {
                     printf("mIsValid = %d\n", result.mIsValid);
                     printf("Return value = %lu, Correct value = %lu\n", result.mValue->value, keys[i]);
@@ -107,10 +116,10 @@ void run(char **argv) {
         
         std::vector<std::thread> thread_group;
 
-        for (int i = 0; i < num_thread; i++)
+        for (uint i = 0; i < num_thread; i++)
             thread_group.push_back(std::thread{func});
 
-        for (int i = 0; i < num_thread; i++)
+        for (uint i = 0; i < num_thread; i++)
             thread_group[i].join();
         
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
