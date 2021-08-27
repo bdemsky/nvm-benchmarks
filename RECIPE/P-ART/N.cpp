@@ -97,8 +97,8 @@ namespace ART_ROWEX {
                 return;
             }
         } while (!typeVersionLockObsolete.compare_exchange_weak(version, version + 0b10));
-#ifdef BUGFIX
-        //        clflush((char*) &typeVersionLockObsolete, sizeof(typeVersionLockObsolete), false, true);  //b5
+#ifdef BUGFIX2
+        clflush((char*) &typeVersionLockObsolete, sizeof(typeVersionLockObsolete), false, true);  //bug1
 #endif
     }
 
@@ -108,8 +108,8 @@ namespace ART_ROWEX {
             return;
         }
         if (typeVersionLockObsolete.compare_exchange_strong(version, version + 0b10)) {
-#ifdef BUGFIX
-          //clflush((char*) &typeVersionLockObsolete, sizeof(typeVersionLockObsolete), false, true);//b6
+#ifdef BUGFIX2
+        clflush((char*) &typeVersionLockObsolete, sizeof(typeVersionLockObsolete), false, true);//bug3
 #endif
             version = version + 0b10;
         } else {
@@ -119,8 +119,8 @@ namespace ART_ROWEX {
 
     void N::writeUnlock() {
         typeVersionLockObsolete.fetch_add(0b10);
-#ifdef BUGFIX
-        //        clflush((char*) &typeVersionLockObsolete, sizeof(typeVersionLockObsolete), false, true); //b7
+#ifdef BUGFIX2
+        clflush((char*) &typeVersionLockObsolete, sizeof(typeVersionLockObsolete), false, true); //bug2
 #endif
     }
 

@@ -8,6 +8,7 @@
 #include <iostream>
 #include <limits>
 #include "Epoche.h"
+#include "Memory/libpmem.h"
 
 using namespace ART;
 
@@ -43,7 +44,7 @@ inline void DeletionList::remove(LabelDelete *label, LabelDelete *prev) {
 inline void DeletionList::add(void *n, uint64_t globalEpoch) {
     deletitionListCount++;
     #ifdef BUGFIX
-    PMCHECK::clflush((char*)&deletitionListCount, sizeof(deletitionListCount), false, false);//b5
+    jaaru_ignore_analysis((char*)&deletitionListCount,sizeof(deletitionListCount));
     #endif
     LabelDelete *label;
     if (headDeletionList != nullptr && headDeletionList->nodesCount < headDeletionList->nodes.size()) {
@@ -59,19 +60,19 @@ inline void DeletionList::add(void *n, uint64_t globalEpoch) {
         label->next = headDeletionList;
         headDeletionList = label;
 #ifdef BUGFIX
-       PMCHECK::clflush((char*)headDeletionList, sizeof(DeletionList)*deletitionListCount, false, false);//b4
+       jaaru_ignore_analysis((char*)&headDeletionList,sizeof(headDeletionList));
 #endif
     }
     label->nodes[label->nodesCount] = n;
     label->nodesCount++;
 #ifdef BUGFIX2
-    PMCHECK::clflush((char*)&label->nodesCount, sizeof(label->nodesCount), false, false);//b6
+    jaaru_ignore_analysis((char*)&label->nodesCount,sizeof(label->nodesCount));
 #endif
     label->epoche = globalEpoch;
 
     added++;
 #ifdef BUGFIX2
-    PMCHECK::clflush((char*)&added, sizeof(added), false, false);//b6
+    jaaru_ignore_analysis((char*)&added,sizeof(added));
 #endif
 }
 
@@ -89,7 +90,7 @@ inline void Epoche::markNodeForDeletion(void *n, ThreadInfo &epocheInfo) {
     epocheInfo.getDeletionList().add(n, currentEpoche.load());
     epocheInfo.getDeletionList().thresholdCounter++;
 #ifdef BUGFIX
-    PMCHECK::clflush((char*)&epocheInfo.getDeletionList().thresholdCounter, sizeof(size_t), false, false);//b6
+    jaaru_ignore_analysis((char*)&epocheInfo.getDeletionList().thresholdCounter,sizeof(epocheInfo.getDeletionList().thresholdCounter));
 #endif
 #endif
 }
@@ -99,7 +100,7 @@ inline void Epoche::exitEpocheAndCleanup(ThreadInfo &epocheInfo) {
     if ((deletionList.thresholdCounter & (64 - 1)) == 1) {
         currentEpoche++;
 #ifdef BUGFIX2
-        PMCHECK::clflush((char*)&currentEpoche, sizeof(std::atomic<uint64_t>), false, false);//b6
+    jaaru_ignore_analysis((char*)&currentEpoche,sizeof(currentEpoche));
 #endif
     }
     if (deletionList.thresholdCounter > startGCThreshhold) {
