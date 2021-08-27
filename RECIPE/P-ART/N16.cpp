@@ -15,7 +15,7 @@ namespace ART_ROWEX {
         compactCount++;
         count++;
         // this clflush will atomically flush the cache line including counters and entire key entries
-        if (flush) clflush((char *)this, sizeof(uintptr_t), false, true);
+        if (flush) clflush((char *)this, sizeof(uintptr_t), true, true);
         return true;
     }
 

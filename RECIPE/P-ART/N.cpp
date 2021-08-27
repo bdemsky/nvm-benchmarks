@@ -98,7 +98,7 @@ namespace ART_ROWEX {
             }
         } while (!typeVersionLockObsolete.compare_exchange_weak(version, version + 0b10));
 #ifdef BUGFIX
-        clflush((char*) &typeVersionLockObsolete, sizeof(typeVersionLockObsolete), false, true);  //b5
+        //        clflush((char*) &typeVersionLockObsolete, sizeof(typeVersionLockObsolete), false, true);  //b5
 #endif
     }
 
@@ -109,7 +109,7 @@ namespace ART_ROWEX {
         }
         if (typeVersionLockObsolete.compare_exchange_strong(version, version + 0b10)) {
 #ifdef BUGFIX
-        clflush((char*) &typeVersionLockObsolete, sizeof(typeVersionLockObsolete), false, true);//b6
+          //clflush((char*) &typeVersionLockObsolete, sizeof(typeVersionLockObsolete), false, true);//b6
 #endif
             version = version + 0b10;
         } else {
@@ -120,7 +120,7 @@ namespace ART_ROWEX {
     void N::writeUnlock() {
         typeVersionLockObsolete.fetch_add(0b10);
 #ifdef BUGFIX
-        clflush((char*) &typeVersionLockObsolete, sizeof(typeVersionLockObsolete), false, true); //b7
+        //        clflush((char*) &typeVersionLockObsolete, sizeof(typeVersionLockObsolete), false, true); //b7
 #endif
     }
 
@@ -206,7 +206,7 @@ namespace ART_ROWEX {
         auto nBig = new biggerN(n->getLevel(), n->getPrefi());
         n->copyTo(nBig);
         nBig->insert(key, val, false);
-        clflush((char *)nBig, sizeof(biggerN), false, true);
+        clflush((char *)nBig, sizeof(biggerN), true, true);
 
         parentNode->writeLockOrRestart(needRestart);
         if (needRestart) {
@@ -227,7 +227,7 @@ namespace ART_ROWEX {
         auto nNew = new curN(n->getLevel(), n->getPrefi());
         n->copyTo(nNew);
         nNew->insert(key, val, false);
-        clflush((char *)nNew, sizeof(curN), false, true);
+        clflush((char *)nNew, sizeof(curN), true, true);
 
         parentNode->writeLockOrRestart(needRestart);
         if (needRestart) {
@@ -352,7 +352,7 @@ namespace ART_ROWEX {
 
         n->remove(key, true, true);
         n->copyTo(nSmall);
-        clflush((char *) nSmall, sizeof(smallerN), false, true);
+        clflush((char *) nSmall, sizeof(smallerN), true, true);
         N::change(parentNode, keyParent, nSmall);
 
         parentNode->writeUnlock();
