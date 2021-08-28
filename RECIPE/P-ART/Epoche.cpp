@@ -42,10 +42,10 @@ inline void DeletionList::remove(LabelDelete *label, LabelDelete *prev) {
 }
 
 inline void DeletionList::add(void *n, uint64_t globalEpoch) {
-    deletitionListCount++;
     #ifdef BUGFIX
     jaaru_ignore_analysis((char*)&deletitionListCount,sizeof(deletitionListCount));
     #endif
+    deletitionListCount++;
     LabelDelete *label;
     if (headDeletionList != nullptr && headDeletionList->nodesCount < headDeletionList->nodes.size()) {
         label = headDeletionList;
@@ -58,10 +58,10 @@ inline void DeletionList::add(void *n, uint64_t globalEpoch) {
         }
         label->nodesCount = 0;
         label->next = headDeletionList;
-        headDeletionList = label;
 #ifdef BUGFIX
-       jaaru_ignore_analysis((char*)&headDeletionList,sizeof(headDeletionList));
+       jaaru_ignore_analysis((char*)headDeletionList,sizeof(LabelDelete)*deletitionListCount);
 #endif
+        headDeletionList = label;
     }
     label->nodes[label->nodesCount] = n;
     label->nodesCount++;
@@ -69,11 +69,10 @@ inline void DeletionList::add(void *n, uint64_t globalEpoch) {
     jaaru_ignore_analysis((char*)&label->nodesCount,sizeof(label->nodesCount));
 #endif
     label->epoche = globalEpoch;
-
-    added++;
 #ifdef BUGFIX2
     jaaru_ignore_analysis((char*)&added,sizeof(added));
 #endif
+    added++;
 }
 
 inline LabelDelete *DeletionList::head() {
@@ -88,20 +87,20 @@ inline void Epoche::enterEpoche(ThreadInfo &epocheInfo) {
 inline void Epoche::markNodeForDeletion(void *n, ThreadInfo &epocheInfo) {
 #ifndef LOCK_INIT
     epocheInfo.getDeletionList().add(n, currentEpoche.load());
-    epocheInfo.getDeletionList().thresholdCounter++;
 #ifdef BUGFIX
     jaaru_ignore_analysis((char*)&epocheInfo.getDeletionList().thresholdCounter,sizeof(epocheInfo.getDeletionList().thresholdCounter));
 #endif
+    epocheInfo.getDeletionList().thresholdCounter++;
 #endif
 }
 
 inline void Epoche::exitEpocheAndCleanup(ThreadInfo &epocheInfo) {
     DeletionList &deletionList = epocheInfo.getDeletionList();
     if ((deletionList.thresholdCounter & (64 - 1)) == 1) {
-        currentEpoche++;
 #ifdef BUGFIX2
-    jaaru_ignore_analysis((char*)&currentEpoche,sizeof(currentEpoche));
+        jaaru_ignore_analysis((char*)&currentEpoche,sizeof(currentEpoche));
 #endif
+        currentEpoche++;
     }
     if (deletionList.thresholdCounter > startGCThreshhold) {
         if (deletionList.size() == 0) {

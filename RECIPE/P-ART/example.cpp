@@ -68,9 +68,9 @@ void run(char **argv) {
         setRegionFromID(2, counters);
     }
 
-    thread_data_t *tds = (thread_data_t *) calloc(num_thread * sizeof(thread_data_t));
+    thread_data_t *tds = (thread_data_t *) calloc(num_thread, sizeof(thread_data_t));
 
-    std::atomic<int> next_thread_id;
+    std::atomic<int> next_thread_id(0);
     {
         // Build tree
         auto starttime = std::chrono::system_clock::now();
