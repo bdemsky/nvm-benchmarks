@@ -10,12 +10,21 @@ namespace ART_ROWEX {
             return false;
         }
         keys[compactCount].store(flipSign(key), flush ? std::memory_order_release : std::memory_order_relaxed);
+#ifdef BUGFIX3
+        clflush((char*)&keys[compactCount],sizeof(keys[compactCount]), false, false);
+#endif
         children[compactCount].store(n, flush ? std::memory_order_release : std::memory_order_relaxed);
-        if (flush) clflush((char *)&children[compactCount], sizeof(N *), false, true);
+#ifdef BUGFIX3
+        clflush((char*)&children[compactCount],sizeof(children[compactCount]), false, false);
+#endif
         compactCount++;
+#ifdef BUGFIX3
+        clflush((char*)&compactCount,sizeof(compactCount), false, false);
+#endif
         count++;
-        // this clflush will atomically flush the cache line including counters and entire key entries
-        if (flush) clflush((char *)this, sizeof(uintptr_t), true, true);
+#ifdef BUGFIX3
+        clflush((char*)&count,sizeof(count), false, true);
+#endif
         return true;
     }
 

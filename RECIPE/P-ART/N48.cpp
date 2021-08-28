@@ -20,11 +20,21 @@ namespace ART_ROWEX {
         }
 
         children[compactCount].store(n, flush ? std::memory_order_release : std::memory_order_relaxed);
-        if (flush) clflush((char *)&children[compactCount], sizeof(N *), false, true);
+#ifdef BUGFIX3
+        if (flush) clflush((char *)&children[compactCount], sizeof(children[compactCount]), false, false);
+#endif
         childIndex[key].store(compactCount, flush ? std::memory_order_release : std::memory_order_relaxed);
-        if (flush) clflush((char *)&childIndex[key], sizeof(uint8_t), false, true);
+#ifdef BUGFIX3
+        if (flush) clflush((char *)&childIndex[key], sizeof(childIndex[key]), false, false);
+#endif
         compactCount++;
+#ifdef BUGFIX3
+        if (flush) clflush((char *)&compactCount, sizeof(compactCount), false, false);
+#endif
         count++;
+#ifdef BUGFIX3
+        if (flush) clflush((char *)&count, sizeof(count), false, false);
+#endif
         return true;
     }
 

@@ -274,7 +274,12 @@ namespace ART_ROWEX {
             }
             case NTypes::N256: {
                 auto n = static_cast<N256 *>(node);
+#ifndef BUGFIX3
+                n->insert(key, val, false);
+#endif
+#ifdef BUGFIX3
                 n->insert(key, val, true);
+#endif
                 node->writeUnlock();
                 break;
             }
