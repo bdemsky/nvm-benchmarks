@@ -41,6 +41,7 @@
 #include <sys/wait.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "Memory/libpmem.h"
 
 //#define BWTREE_DEBUG
 /*
@@ -339,9 +340,9 @@ class BwTreeBase {
       last_p{&header},
       node_count{0UL}
     {
-  // #ifdef BUGFIX
-  //   clflush((char*)this, sizeof(*this), false, true);
-  // #endif
+  #ifdef BUGFIX
+    clflush((char*)this, sizeof(*this), false, true);
+  #endif
     }
   };
   
@@ -472,9 +473,9 @@ class BwTreeBase {
     for(size_t i = 0;i < thread_num;i++) {
       new (gc_metadata_p + i) PaddedGCMetadata{};
     }
-// #ifdef BUGFIX
-//     clflush((char*)gc_metadata_p, sizeof(PaddedGCMetadata)*thread_num, false, true);
-// #endif    
+#ifdef BUGFIX
+    clflush((char*)gc_metadata_p, sizeof(PaddedGCMetadata)*thread_num, false, true);
+#endif    
     return; 
   } 
   
@@ -572,6 +573,7 @@ class BwTreeBase {
     epoch++;
     #ifdef BUGFIX
     clflush((char*)&epoch, sizeof(uint64_t), false, false);
+    jaaru_ignore_analysis((char*)&epoch, sizeof(uint64_t));
     #endif    
     return;
   }
