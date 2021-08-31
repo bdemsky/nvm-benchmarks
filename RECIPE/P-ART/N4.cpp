@@ -19,17 +19,26 @@ namespace ART_ROWEX {
             return false;
         }
         keys[compactCount].store(key, flush ? std::memory_order_release : std::memory_order_relaxed);
+#ifdef BUGFIX3
+        clflush((char*)&keys[compactCount],sizeof(keys[compactCount]), false, false);
+#endif
         children[compactCount].store(n, flush ? std::memory_order_release : std::memory_order_relaxed);
-#ifdef BUGFIX
-        //        if (flush) clflush((char *)this, sizeof(N4), true, true);//b3...doesn't appeat to be necessary
+#ifdef BUGFIX3
+        clflush((char*)&children[compactCount],sizeof(children[compactCount]), false, false);
 #endif
         compactCount++;
+#ifdef BUGFIX3
+        clflush((char*)&compactCount,sizeof(compactCount), false, false);
+#endif
         count++;
+#ifdef BUGFIX3
+        clflush((char*)&count,sizeof(count), false, true);
+#endif
         // As the size of node4 is lower than cache line size (64bytes),
         // only one clflush is required to atomically synchronize its updates
-#ifdef BUGFIX3
-        if (flush) clflush((char *)this, sizeof(N4), false, true);
-#endif
+// #ifdef BUGFIX3
+//         if (flush) clflush((char *)this, sizeof(N4), false, true);
+// #endif
         return true;
     }
 
