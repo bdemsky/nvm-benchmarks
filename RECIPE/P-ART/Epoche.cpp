@@ -59,7 +59,7 @@ inline void DeletionList::add(void *n, uint64_t globalEpoch) {
         label->nodesCount = 0;
         label->next = headDeletionList;
 #ifdef BUGFIX
-       jaaru_ignore_analysis((char*)headDeletionList,sizeof(LabelDelete)*deletitionListCount);
+       jaaru_ignore_analysis((char*)&(label->next),sizeof(label->next));
 #endif
         headDeletionList = label;
     }
