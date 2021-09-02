@@ -15,6 +15,10 @@ execute_process(COMMAND cat /proc/cpuinfo COMMAND grep clflush OUTPUT_VARIABLE E
 execute_process(COMMAND cat /proc/cpuinfo COMMAND grep clflushopt OUTPUT_VARIABLE ENABLE_CLFLUSHOPT)
 execute_process(COMMAND cat /proc/cpuinfo COMMAND grep clwb OUTPUT_VARIABLE ENABLE_CLWB)
 
+# set(ENABLE_CLWB 1)
+# set(CMAKE_C_COMPILER "/scratch/nvm/llvm-project/build/bin/clang")
+# set(CMAKE_CXX_COMPILER "/scratch/nvm/llvm-project/build/bin/clang++")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -march=native -mrtm -mcx16 -mavx -mavx2 -mbmi2 -mlzcnt -Wno-deprecated-declarations -Wall -Wextra -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free -faligned-new=64 -Wno-register -g -S -O3")
 if(ENABLE_CLWB)
     add_definitions(-DCLWB)
     message(STATUS "Looking for clwb instruction - found")
