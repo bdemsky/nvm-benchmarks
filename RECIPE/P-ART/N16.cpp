@@ -26,7 +26,7 @@ namespace ART_ROWEX {
 #endif
         count++;
 #ifndef VERIFYFIX
-        if (flush) clflush((char*)this,sizeof(*this), false, true);
+        if (flush) clflush((char *)this, sizeof(uintptr_t), true, true);
 #endif
         return true;
     }

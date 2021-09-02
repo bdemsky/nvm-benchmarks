@@ -37,7 +37,7 @@ namespace ART_ROWEX {
         // As the size of node4 is lower than cache line size (64bytes),
         // only one clflush is required to atomically synchronize its updates
 #ifndef VERIFYFIX
-        if (flush) clflush((char *)this, sizeof(N4), false, true);
+        if (flush) clflush((char *)this, sizeof(N4), true, true);
 #endif
         return true;
     }

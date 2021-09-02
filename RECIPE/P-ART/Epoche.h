@@ -7,8 +7,6 @@
 #include "libpmem.h"
 #define BUGFIX 1
 #define VERIFYFIX 1
-#define BUGFIX2 1
-#define BUGFIX3 1
 
 namespace ART {
 
