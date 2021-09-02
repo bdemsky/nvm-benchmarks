@@ -79,10 +79,7 @@ namespace ART {
         {
             deletionLists = new DeletionList[number_of_threads];
 #ifdef VERIFYFIX
-            jaaru_ignore_analysis((char*)&currentEpoche,sizeof(currentEpoche));
-            jaaru_ignore_analysis((char*)&startGCThreshhold,sizeof(startGCThreshhold));
-            jaaru_ignore_analysis((char*)&deletionLists,sizeof(deletionLists));
-            jaaru_ignore_analysis((char*)&number_of_threads,sizeof(number_of_threads));
+            jaaru_ignore_analysis((char*)this,sizeof(*this));
 #endif
         }
 

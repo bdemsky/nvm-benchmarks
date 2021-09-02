@@ -23,16 +23,22 @@ namespace ART_ROWEX {
 #ifdef VERIFYFIX
         if (flush) clflush((char *)&children[compactCount], sizeof(children[compactCount]), false, false);
 #endif
+#ifndef VERIFYFIX
+        if (flush) clflush((char *)&children[compactCount], sizeof(N *), false, true);
+#endif
         childIndex[key].store(compactCount, flush ? std::memory_order_release : std::memory_order_relaxed);
 #ifdef VERIFYFIX
         if (flush) clflush((char *)&childIndex[key], sizeof(childIndex[key]), false, false);
+#endif
+#ifndef VERIFYFIX
+        if (flush) clflush((char *)&childIndex[key], sizeof(uint8_t), false, true);
 #endif
         compactCount++;
 #ifdef VERIFYFIX
         if (flush) clflush((char *)&compactCount, sizeof(compactCount), false, false);
 #endif
         count++;
-#ifdef VERIFYFIX
+#ifndef VERIFYFIX
         if (flush) clflush((char *)&count, sizeof(count), false, false);
 #endif
         return true;

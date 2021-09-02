@@ -11,19 +11,22 @@ namespace ART_ROWEX {
         }
         keys[compactCount].store(flipSign(key), flush ? std::memory_order_release : std::memory_order_relaxed);
 #ifdef VERIFYFIX
-        //clflush((char*)&keys[compactCount],sizeof(keys[compactCount]), false, false);
+        clflush((char*)&keys[compactCount],sizeof(keys[compactCount]), false, false);
 #endif
         children[compactCount].store(n, flush ? std::memory_order_release : std::memory_order_relaxed);
+#ifndef VERIFYFIX
+        if (flush) clflush((char *)&children[compactCount], sizeof(N *), false, true);
+#endif
 #ifdef VERIFYFIX
-        //clflush((char*)&children[compactCount],sizeof(children[compactCount]), false, false);
+        clflush((char*)&children[compactCount],sizeof(children[compactCount]), false, false);
 #endif
         compactCount++;
 #ifdef VERIFYFIX
-        //clflush((char*)&compactCount,sizeof(compactCount), false, false);
+        clflush((char*)&compactCount,sizeof(compactCount), false, false);
 #endif
         count++;
-#ifdef VERIFYFIX
-        //clflush((char*)&count,sizeof(count), false, true);
+#ifndef VERIFYFIX
+        if (flush) clflush((char*)this,sizeof(*this), false, true);
 #endif
         return true;
     }

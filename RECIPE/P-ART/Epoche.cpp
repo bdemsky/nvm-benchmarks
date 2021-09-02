@@ -14,13 +14,7 @@ using namespace ART;
 
 inline DeletionList::DeletionList() {
     #ifdef VERIFYFIX
-    jaaru_ignore_analysis((char*)&headDeletionList,sizeof(headDeletionList));
-    jaaru_ignore_analysis((char*)&freeLabelDeletes,sizeof(freeLabelDeletes));
-    jaaru_ignore_analysis((char*)&deletitionListCount,sizeof(deletitionListCount));
-    jaaru_ignore_analysis((char*)&localEpoche,sizeof(localEpoche));
-    jaaru_ignore_analysis((char*)&thresholdCounter,sizeof(thresholdCounter));
-    jaaru_ignore_analysis((char*)&deleted,sizeof(deleted));
-    jaaru_ignore_analysis((char*)&added,sizeof(added));
+    jaaru_ignore_analysis((char*)this,sizeof(*this));
     #endif
 }
 
@@ -56,9 +50,6 @@ inline void DeletionList::remove(LabelDelete *label, LabelDelete *prev) {
 }
 
 inline void DeletionList::add(void *n, uint64_t globalEpoch) {
-    #ifdef VERIFYFIX
-    jaaru_ignore_analysis((char*)&deletitionListCount,sizeof(deletitionListCount));
-    #endif
     deletitionListCount++;
     LabelDelete *label;
     if (headDeletionList != nullptr && headDeletionList->nodesCount < headDeletionList->nodes.size()) {
@@ -69,23 +60,17 @@ inline void DeletionList::add(void *n, uint64_t globalEpoch) {
             freeLabelDeletes = freeLabelDeletes->next;
         } else {
             label = new LabelDelete();
+#ifdef VERIFYFIX
+            jaaru_ignore_analysis((char*)label,sizeof(*label));
+#endif
         }
         label->nodesCount = 0;
         label->next = headDeletionList;
-#ifdef VERIFYFIX
-       jaaru_ignore_analysis((char*)&(label->next),sizeof(label->next));
-#endif
         headDeletionList = label;
     }
     label->nodes[label->nodesCount] = n;
     label->nodesCount++;
-#ifdef VERIFYFIX
-    jaaru_ignore_analysis((char*)&label->nodesCount,sizeof(label->nodesCount));
-#endif
-    label->epoche = globalEpoch;
-#ifdef VERIFYFIX
-    jaaru_ignore_analysis((char*)&added,sizeof(added));
-#endif
+    label->epoche = globalEpoch;f
     added++;
 }
 
@@ -96,17 +81,11 @@ inline LabelDelete *DeletionList::head() {
 inline void Epoche::enterEpoche(ThreadInfo &epocheInfo) {
     unsigned long curEpoche = currentEpoche.load(std::memory_order_relaxed);
     epocheInfo.getDeletionList().localEpoche.store(curEpoche, std::memory_order_release);
-#ifdef VERIFYFIX
-    jaaru_ignore_analysis((char*)&epocheInfo.getDeletionList().localEpoche,sizeof(epocheInfo.getDeletionList().localEpoche));
-#endif
 }
 
 inline void Epoche::markNodeForDeletion(void *n, ThreadInfo &epocheInfo) {
 #ifndef LOCK_INIT
     epocheInfo.getDeletionList().add(n, currentEpoche.load());
-#ifdef VERIFYFIX
-    jaaru_ignore_analysis((char*)&epocheInfo.getDeletionList().thresholdCounter,sizeof(epocheInfo.getDeletionList().thresholdCounter));
-#endif
     epocheInfo.getDeletionList().thresholdCounter++;
 #endif
 }
@@ -114,9 +93,6 @@ inline void Epoche::markNodeForDeletion(void *n, ThreadInfo &epocheInfo) {
 inline void Epoche::exitEpocheAndCleanup(ThreadInfo &epocheInfo) {
     DeletionList &deletionList = epocheInfo.getDeletionList();
     if ((deletionList.thresholdCounter & (64 - 1)) == 1) {
-#ifdef VERIFYFIX
-        jaaru_ignore_analysis((char*)&currentEpoche,sizeof(currentEpoche));
-#endif
         currentEpoche++;
     }
     if (deletionList.thresholdCounter > startGCThreshhold) {
