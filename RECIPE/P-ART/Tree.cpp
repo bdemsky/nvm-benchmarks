@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <fstream>
 #include "N.h"
+#include "libpmem.h"
 
 #ifdef ARTDEBUG
 	std::ostream &art_cout = std::cout;
@@ -21,7 +22,7 @@
 namespace ART_ROWEX {
 
     Tree::Tree(LoadKeyFunction loadKey, uint threads_num) : root(new N256(0, {})), loadKey(loadKey), epoche(256, threads_num) {
-        N::clflush((char *)root, sizeof(N256), true, true);
+        N::clflush((char *)root, sizeof(N256), false, true);
 #ifdef BUGFIX
         N::clflush((char*)this, sizeof(Tree), false, true); //b8
 #endif
@@ -45,11 +46,12 @@ namespace ART_ROWEX {
 #ifdef BUGFIX
             if (n->getType() == NTypes::N48) {
               auto nt = static_cast<N48 *>(n);
-              for(int i=0; i<256; i++)
-                if (nt->childIndex[i].load() >= nt->compactCount) {
-                  //                                    nt->childIndex[i].store(0, std::memory_order_release);
-                  //N::clflush((char *)&nt->childIndex[i], sizeof(uint8_t), false, true);
-                }
+              for(int i=0; i<256; i++){
+                    if (nt->childIndex[i].load() >= nt->compactCount) {
+                    //                                    nt->childIndex[i].store(0, std::memory_order_release);
+                    //N::clflush((char *)&nt->childIndex[i], sizeof(uint8_t), false, true);
+                    }
+              }
             }
 #endif
 
@@ -94,8 +96,10 @@ namespace ART_ROWEX {
     }
 
     void Tree::recoverFromCrash() {
+        jaaru_recovery_procedure_begin();
         N *node = root;
         unlockSubTree(node);
+        jaaru_recovery_procedure_end();
     }
 
     void *Tree::lookup(const Key *k, ThreadInfo &threadEpocheInfo) const {
@@ -361,7 +365,7 @@ namespace ART_ROWEX {
                     // 2)  add node and (tid, *k) as children
                     newNode->insert(k->fkey[nextLevel], N::setLeaf(k), false);
                     newNode->insert(nonMatchingKey, node, false);
-                    N::clflush((char *)newNode, sizeof(N4), true, true);
+                    N::clflush((char *)newNode, sizeof(N4), false, true);
 
                     // 3) lockVersionOrRestart, update parentNode to point to the new node, unlock
                     parentNode->writeLockOrRestart(needRestart);
@@ -437,7 +441,7 @@ namespace ART_ROWEX {
                 auto n4 = new N4(level + prefixLength, &k->fkey[level], prefixLength);
                 n4->insert(k->fkey[level + prefixLength], N::setLeaf(k), false);
                 n4->insert(key->fkey[level + prefixLength], nextNode, false);
-                N::clflush((char *)n4, sizeof(N4), true, true);
+                N::clflush((char *)n4, sizeof(N4), false, true);
 
                 N::change(node, k->fkey[level - 1], n4);
                 node->writeUnlock();

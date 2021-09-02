@@ -97,7 +97,7 @@ namespace ART_ROWEX {
                 return;
             }
         } while (!typeVersionLockObsolete.compare_exchange_weak(version, version + 0b10));
-#ifdef BUGFIX2
+#ifdef VERIFYFIX
         clflush((char*) &typeVersionLockObsolete, sizeof(typeVersionLockObsolete), false, true);  //bug1
 #endif
     }
@@ -108,7 +108,7 @@ namespace ART_ROWEX {
             return;
         }
         if (typeVersionLockObsolete.compare_exchange_strong(version, version + 0b10)) {
-#ifdef BUGFIX2
+#ifdef VERIFYFIX
         clflush((char*) &typeVersionLockObsolete, sizeof(typeVersionLockObsolete), false, true);//bug3
 #endif
             version = version + 0b10;
@@ -119,7 +119,7 @@ namespace ART_ROWEX {
 
     void N::writeUnlock() {
         typeVersionLockObsolete.fetch_add(0b10);
-#ifdef BUGFIX2
+#ifdef VERIFYFIX
         clflush((char*) &typeVersionLockObsolete, sizeof(typeVersionLockObsolete), false, true); //bug2
 #endif
     }
@@ -206,7 +206,7 @@ namespace ART_ROWEX {
         auto nBig = new biggerN(n->getLevel(), n->getPrefi());
         n->copyTo(nBig);
         nBig->insert(key, val, false);
-        clflush((char *)nBig, sizeof(biggerN), true, true);
+        clflush((char *)nBig, sizeof(biggerN), false, true);
 
         parentNode->writeLockOrRestart(needRestart);
         if (needRestart) {
@@ -227,7 +227,7 @@ namespace ART_ROWEX {
         auto nNew = new curN(n->getLevel(), n->getPrefi());
         n->copyTo(nNew);
         nNew->insert(key, val, false);
-        clflush((char *)nNew, sizeof(curN), true, true);
+        clflush((char *)nNew, sizeof(curN), false, true);
 
         parentNode->writeLockOrRestart(needRestart);
         if (needRestart) {
@@ -274,12 +274,7 @@ namespace ART_ROWEX {
             }
             case NTypes::N256: {
                 auto n = static_cast<N256 *>(node);
-#ifndef BUGFIX3
-                n->insert(key, val, false);
-#endif
-#ifdef BUGFIX3
                 n->insert(key, val, true);
-#endif
                 node->writeUnlock();
                 break;
             }
@@ -357,7 +352,7 @@ namespace ART_ROWEX {
 
         n->remove(key, true, true);
         n->copyTo(nSmall);
-        clflush((char *) nSmall, sizeof(smallerN), true, true);
+        clflush((char *) nSmall, sizeof(smallerN), false, true);
         N::change(parentNode, keyParent, nSmall);
 
         parentNode->writeUnlock();

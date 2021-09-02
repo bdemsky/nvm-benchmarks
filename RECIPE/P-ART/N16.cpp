@@ -10,20 +10,20 @@ namespace ART_ROWEX {
             return false;
         }
         keys[compactCount].store(flipSign(key), flush ? std::memory_order_release : std::memory_order_relaxed);
-#ifdef BUGFIX3
-        clflush((char*)&keys[compactCount],sizeof(keys[compactCount]), false, false);
+#ifdef VERIFYFIX
+        //clflush((char*)&keys[compactCount],sizeof(keys[compactCount]), false, false);
 #endif
         children[compactCount].store(n, flush ? std::memory_order_release : std::memory_order_relaxed);
-#ifdef BUGFIX3
-        clflush((char*)&children[compactCount],sizeof(children[compactCount]), false, false);
+#ifdef VERIFYFIX
+        //clflush((char*)&children[compactCount],sizeof(children[compactCount]), false, false);
 #endif
         compactCount++;
-#ifdef BUGFIX3
-        clflush((char*)&compactCount,sizeof(compactCount), false, false);
+#ifdef VERIFYFIX
+        //clflush((char*)&compactCount,sizeof(compactCount), false, false);
 #endif
         count++;
-#ifdef BUGFIX3
-        clflush((char*)&count,sizeof(count), false, true);
+#ifdef VERIFYFIX
+        //clflush((char*)&count,sizeof(count), false, true);
 #endif
         return true;
     }

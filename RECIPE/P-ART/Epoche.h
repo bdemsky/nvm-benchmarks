@@ -4,7 +4,9 @@
 #include <atomic>
 #include <array>
 #include "../cacheops.h"
+#include "libpmem.h"
 #define BUGFIX 1
+#define VERIFYFIX 1
 #define BUGFIX2 1
 #define BUGFIX3 1
 
@@ -23,7 +25,7 @@ namespace ART {
         std::size_t deletitionListCount = 0;
 
     public:
-
+        DeletionList();
         std::atomic<uint64_t> localEpoche{0};
         size_t thresholdCounter{0};
 
@@ -76,9 +78,11 @@ namespace ART {
                 number_of_threads(thread_num) 
         {
             deletionLists = new DeletionList[number_of_threads];
-#ifdef BUGFIX
-            PMCHECK::clflush((char*)deletionLists, sizeof(DeletionList)*number_of_threads, false, true);//real..b1
-            //PMCHECK::clflush((char*)&deletionLists, sizeof(DeletionList*), false, true);//doesn't appear real...b2
+#ifdef VERIFYFIX
+            jaaru_ignore_analysis((char*)&currentEpoche,sizeof(currentEpoche));
+            jaaru_ignore_analysis((char*)&startGCThreshhold,sizeof(startGCThreshhold));
+            jaaru_ignore_analysis((char*)&deletionLists,sizeof(deletionLists));
+            jaaru_ignore_analysis((char*)&number_of_threads,sizeof(number_of_threads));
 #endif
         }
 
@@ -103,6 +107,7 @@ namespace ART {
     public:
 
         EpocheGuard(ThreadInfo &threadEpocheInfo) : threadEpocheInfo(threadEpocheInfo) {
+            jaaru_ignore_analysis((char*)this,sizeof(*this));
             threadEpocheInfo.getEpoche().enterEpoche(threadEpocheInfo);
         }
 

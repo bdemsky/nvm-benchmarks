@@ -41,7 +41,7 @@
 #include <sys/wait.h>
 #include <stdio.h>
 #include <unistd.h>
-#include "Memory/libpmem.h"
+#include "libpmem.h"
 
 //#define BWTREE_DEBUG
 /*
@@ -67,6 +67,7 @@
 // This must be declared before all include directives
 using NodeID = uint64_t;
 #define BUGFIX 1
+#define VERIFYFIX 1
 #include "sorted_small_set.h"
 #include "bloom_filter.h"
 #include "atomic_stack.h"
@@ -340,7 +341,7 @@ class BwTreeBase {
       last_p{&header},
       node_count{0UL}
     {
-  #ifdef BUGFIX
+  #ifdef VERIFYFIX
     clflush((char*)this, sizeof(*this), false, true);
   #endif
     }
@@ -473,7 +474,7 @@ class BwTreeBase {
     for(size_t i = 0;i < thread_num;i++) {
       new (gc_metadata_p + i) PaddedGCMetadata{};
     }
-#ifdef BUGFIX
+#ifdef VERIFYFIX
     clflush((char*)gc_metadata_p, sizeof(PaddedGCMetadata)*thread_num, false, true);
 #endif    
     return; 
@@ -501,7 +502,7 @@ class BwTreeBase {
     
     // Allocate memory for thread local data structure
     PrepareThreadLocal();
-    
+    jaaru_ignore_analysis((char*)&epoch, sizeof(uint64_t));
     return;
   }
   
@@ -573,7 +574,6 @@ class BwTreeBase {
     epoch++;
     #ifdef BUGFIX
     clflush((char*)&epoch, sizeof(uint64_t), false, false);
-    jaaru_ignore_analysis((char*)&epoch, sizeof(uint64_t));
     #endif    
     return;
   }
