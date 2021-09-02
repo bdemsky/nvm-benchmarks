@@ -8,6 +8,12 @@
 #define BUGFIX 1
 #define VERIFYFIX 1
 
+extern "C" {
+    void jaaru_recovery_procedure_begin();
+    void jaaru_recovery_procedure_end();
+    void jaaru_ignore_analysis(char * addrs, size_t size);
+}
+
 namespace ART {
 
     struct LabelDelete {

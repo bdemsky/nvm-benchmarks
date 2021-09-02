@@ -70,7 +70,7 @@ inline void DeletionList::add(void *n, uint64_t globalEpoch) {
     }
     label->nodes[label->nodesCount] = n;
     label->nodesCount++;
-    label->epoche = globalEpoch;f
+    label->epoche = globalEpoch;
     added++;
 }
 
