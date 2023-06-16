@@ -7,6 +7,7 @@
 using namespace std;
 
 #include "masstree.h"
+#include "../common.h"
 
 extern "C" {
     void * getRegionFromID(uint ID);

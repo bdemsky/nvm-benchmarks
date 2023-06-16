@@ -14,7 +14,7 @@
 #include "tbb/concurrent_vector.h"
 #endif
 
-#define BUGFIX 1
+//#define BUGFIX 1
 //#define VERIFYFIXADV 1
 
 void *masstreeptr = NULL;
@@ -75,7 +75,7 @@ static inline void mfence() {
     asm volatile("mfence":::"memory");
 }
 
-static inline void clflush(char *data, int len, bool fence)
+static inline void clflush(char *data, int len, bool fence) __attribute__ ((annotate("myflush:addr|size|ignore")))
 {
     volatile char *ptr = (char *)((unsigned long)data &~(CACHE_LINE_SIZE-1));
     if (fence)

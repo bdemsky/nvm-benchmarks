@@ -28,7 +28,7 @@
  *
  */
 
-#define BUGFIX 1
+//#define BUGFIX 1
 
 #include <math.h>
 #include <stdlib.h>
@@ -110,7 +110,7 @@ static inline void mfence() {
     asm volatile("mfence":::"memory");
 }
 
-static inline void clflush(char *data, int len, bool fence)
+static inline void clflush(char *data, int len, bool fence) __attribute__ ((annotate("myflush:addr|size|ignore")))
 {
     volatile char *ptr = (char *)((unsigned long)data &~(CACHE_LINE_SIZE-1));
     if (fence)

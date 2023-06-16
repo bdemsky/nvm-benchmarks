@@ -363,7 +363,7 @@ class AtomicStack {
               return var;
           };
 
-          auto clflush = [&](char *data, int len) {
+          auto clflush = [&](char *data, int len) __attribute__((annotate("myflush:ignore|addr|size"))) {
               unsigned long write_latency = 0, CACHE_LINE_SIZE = 64, CPU_FREQ_MHZ = 2100;
               volatile char *ptr = (char *)((unsigned long)data & ~(CACHE_LINE_SIZE-1));
               for(; ptr<data+len; ptr+=CACHE_LINE_SIZE) {

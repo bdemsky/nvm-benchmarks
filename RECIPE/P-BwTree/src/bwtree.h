@@ -41,6 +41,7 @@
 #include <sys/wait.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "../../common.h"
 
 //#define BWTREE_DEBUG
 /*
@@ -65,8 +66,8 @@
 
 // This must be declared before all include directives
 using NodeID = uint64_t;
-#define BUGFIX 1
-#define VERIFYFIX 1
+//#define BUGFIX 1
+//#define VERIFYFIX 1
 #include "sorted_small_set.h"
 #include "bloom_filter.h"
 #include "atomic_stack.h"
@@ -243,7 +244,7 @@ static inline void mfence() {
     asm volatile("mfence":::"memory");
 }
 
-static inline void clflush(char *data, int len, bool front, bool back)
+static inline void clflush(char *data, int len, bool front, bool back) __attribute__ ((annotate("myflush:addr|size|ignore|ignore")))
 {
     volatile char *ptr = (char *)((unsigned long)data &~(CACHE_LINE_SIZE-1));
     if (front)
@@ -3254,7 +3255,7 @@ class BwTree : public BwTreeBase {
    */
   inline bool InstallNodeToReplace(NodeID node_id,
                                    const BaseNode *node_p,
-                                   const BaseNode *prev_p) {
+                                   const BaseNode *prev_p) __attribute__ ((annotate("flush_parameter:ignore|ignore|addr|ignore"))) {
     // Make sure node id is valid and does not exceed maximum
     assert(node_id != INVALID_NODE_ID);
     assert(node_id < MAPPING_TABLE_SIZE);
@@ -3367,7 +3368,7 @@ remove_abort:
    * installation would always succeed
    */
   inline void InstallNewNode(NodeID node_id,
-                             const BaseNode *node_p) {
+                             const BaseNode *node_p) __attribute__ ((annotate("flush_parameter:ignore|addr|ignore"))) {
 
     NodeType type = node_p->GetType();
 
@@ -3452,8 +3453,9 @@ remove_abort:
 
 retry_traverse:
     assert(context_p->abort_flag == false);
+#ifdef BWTREE_DEBUG
     assert(context_p->current_level == -1);
-
+#endif
     // This is false only if we have simulated  a crash.
     // if so, we will have to return immediately.
     int crash_type;
@@ -5376,7 +5378,9 @@ abort_traverse:
    * which also freed up the logical node object
    */
   static inline NodeSnapshot *GetLatestNodeSnapshot(Context *context_p) {
+#ifdef BWTREE_DEBUG
     assert(context_p->current_level >= 0);
+#endif
 
     return &context_p->current_snapshot;
   }
@@ -5392,8 +5396,10 @@ abort_traverse:
    * snapshots out of the stack
    */
   inline NodeSnapshot *GetLatestParentNodeSnapshot(Context *context_p) {
+#ifdef BWTREE_DEBUG
     // Make sure the current node has a parent
     assert(context_p->current_level >= 1);
+#endif
 
     // This is the address of the parent node
     return &context_p->parent_snapshot;
@@ -5410,7 +5416,9 @@ abort_traverse:
    * since root node does not have any parent node
    */
   inline bool IsOnLeftMostChild(Context *context_p) {
+#ifdef BWTREE_DEBUG
     assert(context_p->current_level >= 1);
+#endif
     /*std::cout << __func__ << " checking lowkey " << std::endl;
     std:: cout << __func__ << " low_key_Node_ID = " <<  GetLatestParentNodeSnapshot(context_p)->node_p->GetLowKeyNodeID() << std::endl;
     std:: cout << __func__ << " node ID = " <<  GetLatestNodeSnapshot(context_p)->node_id << std::endl;
@@ -5441,8 +5449,9 @@ abort_traverse:
    */
   void JumpToLeftSibling(Context *context_p) {
     bwt_printf("Jumping to the left sibling\n");
-
+#ifdef BWTREE_DEBUG
     assert(context_p->HasParentNode());
+#endif
     // Get last record which is the current node's context
     // and we must make sure the current node is not left mode node
     NodeSnapshot *snapshot_p = GetLatestNodeSnapshot(context_p);
@@ -5902,7 +5911,9 @@ before_switch:
   void TraverseBI(Context *context_p) {
 retry_traverse:
     assert(context_p->abort_flag == false);
+#ifdef BWTREE_DEBUG
     assert(context_p->current_level == -1);
+#endif
 
     NodeID start_node_id = root_id.load();
     context_p->current_snapshot.node_id = INVALID_NODE_ID;
@@ -5964,7 +5975,9 @@ abort_traverse:
                              std::vector<ValueType> *value_list_p) {
 retry_traverse:
     assert(context_p->abort_flag == false);
+#ifdef BWTREE_DEBUG
     assert(context_p->current_level == -1);
+#endif
 
     // This is the serialization point for reading/writing root node
     NodeID child_node_id = root_id.load();
@@ -6488,8 +6501,9 @@ before_switch:
           next_item_p = &split_node_p->child_node_p->GetHighKeyPair();
         }
 
+#ifdef BWTREE_DEBUG
         assert(context_p->current_level >= 0);
-
+#endif
         // If the parent snapshot has an invalid node ID then it must be the
         // root node. 
         if(context_p->IsOnRootNode() == true) {

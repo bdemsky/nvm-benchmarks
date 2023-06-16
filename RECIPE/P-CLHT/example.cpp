@@ -9,6 +9,7 @@ using namespace std;
 #include "clht.h"
 #include "ssmem.h"
 #include "../cacheops.h"
+#include "../common.h"
 
 extern "C" {
     void * getRegionFromID(uint ID);
