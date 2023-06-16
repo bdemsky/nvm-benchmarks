@@ -33,7 +33,7 @@ namespace ART_ROWEX {
         asm volatile("mfence":::"memory");
     }
 
-    inline void N::clflush(char *data, int len, bool front, bool back)
+    inline void N::clflush(char *data, int len, bool front, bool back) __attribute__ ((annotate("myflush:addr|size|ignore|ignore")))
     {
         volatile char *ptr = (char *)((unsigned long)data & ~(cache_line_size - 1));
         if (front)

@@ -27,7 +27,7 @@ inline std::size_t DeletionList::size() {
     return deletitionListCount;
 }
 
-inline void DeletionList::remove(LabelDelete *label, LabelDelete *prev) {
+inline void DeletionList::remove(LabelDelete *label, LabelDelete *prev) __attribute__ ((annotate("ignore"))) {
     if (prev == nullptr) {
         headDeletionList = label->next;
     } else {
@@ -40,7 +40,7 @@ inline void DeletionList::remove(LabelDelete *label, LabelDelete *prev) {
     deleted += label->nodesCount;
 }
 
-inline void DeletionList::add(void *n, uint64_t globalEpoch) {
+inline void DeletionList::add(void *n, uint64_t globalEpoch) __attribute__ ((annotate("ignore"))) {
     deletitionListCount++;
     // #ifdef BUGFIX
     // PMCHECK::clflush((char*)&deletitionListCount, sizeof(deletitionListCount), false, false);//b5
@@ -76,19 +76,19 @@ inline LabelDelete *DeletionList::head() {
     return headDeletionList;
 }
 
-inline void Epoche::enterEpoche(ThreadInfo &epocheInfo) {
+inline void Epoche::enterEpoche(ThreadInfo &epocheInfo) __attribute__ ((annotate("ignore"))) {
     unsigned long curEpoche = currentEpoche.load(std::memory_order_relaxed);
     epocheInfo.getDeletionList().localEpoche.store(curEpoche, std::memory_order_release);
 }
 
-inline void Epoche::markNodeForDeletion(void *n, ThreadInfo &epocheInfo) {
+inline void Epoche::markNodeForDeletion(void *n, ThreadInfo &epocheInfo) __attribute__ ((annotate("ignore"))) {
 #ifndef LOCK_INIT
     epocheInfo.getDeletionList().add(n, currentEpoche.load());
     epocheInfo.getDeletionList().thresholdCounter++;
 #endif
 }
 
-inline void Epoche::exitEpocheAndCleanup(ThreadInfo &epocheInfo) {
+inline void Epoche::exitEpocheAndCleanup(ThreadInfo &epocheInfo) __attribute__ ((annotate("ignore"))) {
     DeletionList &deletionList = epocheInfo.getDeletionList();
     if ((deletionList.thresholdCounter & (64 - 1)) == 1) {
         currentEpoche++;
@@ -127,7 +127,7 @@ inline void Epoche::exitEpocheAndCleanup(ThreadInfo &epocheInfo) {
     }
 }
 
-inline Epoche::~Epoche() {
+inline Epoche::~Epoche() __attribute__ ((annotate("ignore"))) {
     uint64_t oldestEpoche = std::numeric_limits<uint64_t>::max();
     for (uint i=0; i< number_of_threads; i++) {
         auto &epoche = deletionLists[i];

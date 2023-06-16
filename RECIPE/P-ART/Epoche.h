@@ -4,15 +4,15 @@
 #include <atomic>
 #include <array>
 #include "../cacheops.h"
-#define BUGFIX 1
+#include "../common.h"
+//#define BUGFIX 1
 
-#define VERIFYFIX 1
+//#define VERIFYFIX 1
 
 extern "C" {
     void jaaru_ignore_analysis(char * addrs, size_t size);
     void jaaru_recovery_procedure_begin();
     void jaaru_recovery_procedure_end();
-
 }
 
 namespace ART {
