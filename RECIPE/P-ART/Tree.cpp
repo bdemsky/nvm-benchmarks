@@ -12,10 +12,10 @@
 #include "N.h"
 
 #ifdef ARTDEBUG
-	std::ostream &art_cout = std::cout;
+    std::ostream &art_cout = std::cout;
 #else
-	std::ofstream dev_null("/dev/null");
-	std::ostream &art_cout = dev_null;
+    std::ofstream dev_null("/dev/null");
+    std::ostream &art_cout = dev_null;
 #endif
 
 namespace ART_ROWEX {
@@ -38,54 +38,54 @@ namespace ART_ROWEX {
 
     void Tree::unlockSubTree( N *n) {
         if(!N::isLeaf(n)){
-          if (n->isLocked(n->getVersion()))
-            n->writeUnlock();
-            uint size =0;
-            std::atomic<N *> * children = N::getChildNodes(n, size);
+            if (n->isLocked(n->getVersion()))
+                n->writeUnlock();
+                uint size =0;
+                std::atomic<N *> * children = N::getChildNodes(n, size);
 #ifdef BUGFIX
             if (n->getType() == NTypes::N48) {
-              auto nt = static_cast<N48 *>(n);
-              for(int i=0; i<256; i++)
-                if (nt->childIndex[i].load() >= nt->compactCount) {
-                  //                                    nt->childIndex[i].store(0, std::memory_order_release);
-                  //N::clflush((char *)&nt->childIndex[i], sizeof(uint8_t), false, true);
-                }
+                auto nt = static_cast<N48 *>(n);
+                for(int i=0; i<256; i++)
+                    if (nt->childIndex[i].load() >= nt->compactCount) {
+                    //                                    nt->childIndex[i].store(0, std::memory_order_release);
+                    //N::clflush((char *)&nt->childIndex[i], sizeof(uint8_t), false, true);
+                    }
             }
 #endif
 
             for(uint i=0; i< size; i++) {
 #ifdef BUGFIX
-              switch(n->getType()) {
+                switch(n->getType()) {
 
-              case NTypes::N4: {
-                auto nt = static_cast<N4 *>(n);
-                if (i >= nt->compactCount) {
-                  //nt->keys[i].store(0, std::memory_order_release);
-                  //nt->children[i].store(NULL, std::memory_order_release);                  
+                case NTypes::N4: {
+                    auto nt = static_cast<N4 *>(n);
+                    if (i >= nt->compactCount) {
+                        //nt->keys[i].store(0, std::memory_order_release);
+                        //nt->children[i].store(NULL, std::memory_order_release);
+                    }
+                    break;
                 }
-                break;
-              }
-              case NTypes::N16: {
-                auto nt = static_cast<N16 *>(n);
-                if (i >= nt->compactCount) {
-                  //nt->keys[i].store(0, std::memory_order_release);
-                  //nt->children[i].store(NULL, std::memory_order_release);                  
+                case NTypes::N16: {
+                    auto nt = static_cast<N16 *>(n);
+                    if (i >= nt->compactCount) {
+                        //nt->keys[i].store(0, std::memory_order_release);
+                        //nt->children[i].store(NULL, std::memory_order_release);
+                    }
+                    break;
                 }
-                break;
-              }
-              case NTypes::N48: {
-                auto nt = static_cast<N48 *>(n);
-                if (i >= nt->compactCount) {
-                  //nt->children[i].store(NULL, std::memory_order_release);                  
+                case NTypes::N48: {
+                    auto nt = static_cast<N48 *>(n);
+                    if (i >= nt->compactCount) {
+                        //nt->children[i].store(NULL, std::memory_order_release);
+                    }
+                    break;
                 }
-                break;
-              }
-              default:
-                break;
-              }
+                default:
+                    break;
+                }
 #endif
-              
-              if(children[i] != nullptr){
+
+                if(children[i] != nullptr){
                     N* child = children[i].load();
                     unlockSubTree(child);
                 }
@@ -103,8 +103,8 @@ namespace ART_ROWEX {
         N *node = root;
         uint32_t level = 0;
         bool optimisticPrefixMatch = false;
-	
-	//art_cout << "Searching key " << k->fkey << std::endl;
+
+        //art_cout << "Searching key " << k->fkey << std::endl;
         while (true) {
             switch (checkPrefix(node, k, level)) { // increases level
                 case CheckPrefixResult::NoMatch:
@@ -322,12 +322,12 @@ namespace ART_ROWEX {
     }
 
     void Tree::insert(const Key *k, ThreadInfo &epocheInfo) {
-	//art_cout << "Inserting key " << k->fkey << std::endl;
+        //art_cout << "Inserting key " << k->fkey << std::endl;
         N::clflush((char *)k, sizeof(Key) + k->key_len, false, true);
         EpocheGuard epocheGuard(epocheInfo);
         restart:
         bool needRestart = false;
-	//art_cout << __func__ << "Start/Restarting insert.." << std::endl;
+        //art_cout << __func__ << "Start/Restarting insert.." << std::endl;
         N *node = nullptr;
         N *nextNode = root;
         N *parentNode = nullptr;
@@ -373,37 +373,30 @@ namespace ART_ROWEX {
                     N::change(parentNode, parentKey, newNode);
                     parentNode->writeUnlock();
 
-		#ifdef CRASH_SPLIT
-		    // Fork a new process now
-	    	    pid_t pid = fork();
+                #ifdef CRASH_SPLIT
+                    // Fork a new process now
+                    pid_t pid = fork();
 
-		    // child process
-		    if (pid == 0){
-			// This is a crash state. So initialize locks
-			lock_initialization();
-			art_cout << "\n Child process returned before updating level "<< std::endl;	
-			return;
-		    }
-		    else if (pid > 0) {
-			int returnStatus;
-			waitpid(pid, &returnStatus, 0);
-			art_cout << " Continuing in parent to insert " << k->fkey << std::endl;
-		#endif
-	    
-                    	// 4) update prefix of node, unlock
-                    	node->setPrefix(remainingPrefix.prefix,
-                                    node->getPrefi().prefixCount - ((nextLevel - level) + 1), true);
+                    // child process
+                    if (pid == 0){
+                        // This is a crash state. So initialize locks
+                        lock_initialization();
+                        art_cout << "\n Child process returned before updating level "<< std::endl;
+                        return;
+                    }
+                    else if (pid > 0) {
+                        int returnStatus;
+                        waitpid(pid, &returnStatus, 0);
+                        art_cout << " Continuing in parent to insert " << k->fkey << std::endl;
+                #endif
 
-                    	node->writeUnlock();
-                    	return;
+                        // 4) update prefix of node, unlock
+                        node->setPrefix(remainingPrefix.prefix,
+                                node->getPrefi().prefixCount - ((nextLevel - level) + 1), true);
 
-		#ifdef CRASH_SPLIT
-		   }//end parent 
-		   else {
-			art_cout << "Fork failed" << std::endl;
-			return;
-		   }
-		#endif
+                        node->writeUnlock();
+                        return;
+
                 } // end case  NoMatch
                 case CheckPrefixPessimisticResult::Match:
                     break;
@@ -413,7 +406,7 @@ namespace ART_ROWEX {
             nodeKey = k->fkey[level];
             nextNode = N::getChild(nodeKey, node);
             
-	    if (nextNode == nullptr) {
+            if (nextNode == nullptr) {
                 node->lockVersionOrRestart(v, needRestart);
                 if (needRestart) goto restart;
 
@@ -527,33 +520,33 @@ namespace ART_ROWEX {
                                 //N::remove(node, k[level]); not necessary
                                 N::change(parentNode, parentKey, secondNodeN);
 
-			     #ifdef CRASH_MERGE
-			        pid_t pid = fork();
-				if (pid == 0){
-					// This is a crash state. So initialize locks
-					lock_initialization();
-					art_cout << "\n Child process returned before updating level in merge"<< std::endl;	
-					return;
-				}
-				else if (pid > 0) {
-					int returnStatus;
-					waitpid(pid, &returnStatus, 0);
-					art_cout << " Continuing in parent to remove " << k->fkey << std::endl;
-			       #endif
-                               		secondNodeN->addPrefixBefore(node, secondNodeK);
+                            #ifdef CRASH_MERGE
+                                pid_t pid = fork();
+                                if (pid == 0){
+                                    // This is a crash state. So initialize locks
+                                    lock_initialization();
+                                    art_cout << "\n Child process returned before updating level in merge"<< std::endl;
+                                    return;
+                                }
+                                else if (pid > 0) {
+                                    int returnStatus;
+                                    waitpid(pid, &returnStatus, 0);
+                                    art_cout << " Continuing in parent to remove " << k->fkey << std::endl;
+                            #endif
+                                    secondNodeN->addPrefixBefore(node, secondNodeK);
 
-                                	parentNode->writeUnlock();
-                                	node->writeUnlockObsolete();
-                                	this->epoche.markNodeForDeletion(node, threadInfo);
-                                	secondNodeN->writeUnlock();
+                                    parentNode->writeUnlock();
+                                    node->writeUnlockObsolete();
+                                    this->epoche.markNodeForDeletion(node, threadInfo);
+                                    secondNodeN->writeUnlock();
 
-				#ifdef CRASH_MERGE
-				  }// end parent
-				  else {
-					art_cout << "Fork failed" << std::endl;
-					return;
-				  }//end fork fail
-				#endif
+                            #ifdef CRASH_MERGE
+                                }// end parent
+                                else {
+                                    art_cout << "Fork failed" << std::endl;
+                                    return;
+                                }//end fork fail
+                            #endif
                             }
                         } else {
                             N::removeAndUnlock(node, k->fkey[level], parentNode, parentKey, threadInfo, needRestart);
@@ -598,19 +591,19 @@ namespace ART_ROWEX {
                                                                         Prefix &nonMatchingPrefix,
                                                                         LoadKeyFunction loadKey) {
         Prefix p = n->getPrefi();
-	    //art_cout << __func__ << ":Actual=" << p.prefixCount + level << ",Expected=" << n->getLevel() << std::endl;
+        //art_cout << __func__ << ":Actual=" << p.prefixCount + level << ",Expected=" << n->getLevel() << std::endl;
         if (p.prefixCount + level != n->getLevel()) {
             // Intermediate or inconsistent state from path compression "split" or "merge" is detected
             // Inconsistent path compressed prefix should be recovered in here
             bool needRecover = false;
             auto v = n->getVersion();
-	        art_cout << __func__ << " INCORRECT LEVEL ENCOUNTERED " << std::endl;
+            art_cout << __func__ << " INCORRECT LEVEL ENCOUNTERED " << std::endl;
             n->lockVersionOrRestart(v, needRecover);
             if (!needRecover) {
                 // Inconsistent state due to prior system crash is suspected --> Do recovery
                 // TODO: recovery algorithm will be added
                 // 1) Picking up arbitrary two leaf nodes and then 2) rebuilding correct compressed prefix
-		        art_cout << __func__ << " PERFORMING RECOVERY" << std::endl;
+                art_cout << __func__ << " PERFORMING RECOVERY" << std::endl;
                 uint32_t discrimination = (n->getLevel() > level ? n->getLevel() - level : level - n->getLevel());
                 Key *kr = N::getAnyChildTid(n);
                 p.prefixCount = discrimination;

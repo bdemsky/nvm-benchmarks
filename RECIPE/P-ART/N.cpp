@@ -101,13 +101,13 @@ namespace ART_ROWEX {
     }
 
     void N::lockVersionOrRestart(uint64_t &version, bool &needRestart) {
-      if (isLocked(version) || isObsolete(version)) {
-	needRestart = true;
+        if (isLocked(version) || isObsolete(version)) {
+            needRestart = true;
             return;
         }
         if (typeVersionLockObsolete.compare_exchange_strong(version, version + 0b10)) {
 #ifdef VERIFYFIX
-          clflush((char*) &typeVersionLockObsolete, sizeof(typeVersionLockObsolete), false, true);//b1 by pmverifier
+            clflush((char*) &typeVersionLockObsolete, sizeof(typeVersionLockObsolete), false, true);//b1 by pmverifier
 #endif
             version = version + 0b10;
         } else {
